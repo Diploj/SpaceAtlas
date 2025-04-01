@@ -16,7 +16,7 @@ MapperConfigurator.ConfigureServices(builder.Services);
 SwaggerConfigurator.ConfigureServices(builder.Services);
 SerilogConfigurator.ConfigureService(builder);
 RegisterServices.Register(builder.Services);
-
+IdentityConfigurator.Configure(builder.Services);
 var app = builder.Build();
 
 SwaggerConfigurator.ConfigureApplication(app);
