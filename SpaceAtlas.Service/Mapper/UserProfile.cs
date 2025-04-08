@@ -1,7 +1,7 @@
 using AutoMapper;
 using SpaceAtlas.BL.User.Entities;
 using SpaceAtlas.Controllers.User.Entities;
-using SpaceAtlas.Hasher;
+using SpaceAtlas.Algoritms;
 
 namespace SpaceAtlas.Mapper;
 

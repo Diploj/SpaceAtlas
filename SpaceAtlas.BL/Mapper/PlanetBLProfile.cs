@@ -9,5 +9,6 @@ public class PlanetBLProfile : Profile
     public PlanetBLProfile()
     {
         CreateMap<PlanetModel, PlanetEntity>();
+        CreateMap<PlanetEntity, PlanetModel>();
     }
 }

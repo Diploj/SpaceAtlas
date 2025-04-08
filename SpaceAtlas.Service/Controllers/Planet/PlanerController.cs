@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpaceAtlas.BL.Planet;
 using SpaceAtlas.BL.Planet.Entities;
@@ -24,21 +26,24 @@ public class PlanetController : ControllerBase
         _planetService = planetService;
     }
 
+    [Authorize]
     [HttpPost("create")]
-    public IActionResult CreatePlanet([FromBody] PlanetCreateRequest request)
+    public async Task<IActionResult> CreatePlanet([FromBody] PlanetCreateRequest request)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var validationResult = new PlanetCreateValidator().Validate(request);
-        if (validationResult.IsValid)
+        if (validationResult.IsValid && userId != null)
         {
             try
             {
                 var createPlanetModel = _mapper.Map<PlanetModel>(request);
-                var planetId = _planetService.Create(createPlanetModel);
+                createPlanetModel.UserId = Guid.Parse(userId);
+                var planetId = await _planetService.Create(createPlanetModel);
                 return Ok(planetId);
             }
             catch (Exception e)
             {
-                _logger.LogError(e.Message);
+                _logger.LogError(e.ToString());
                 return BadRequest(e.Message);
             }
         }
@@ -46,21 +51,31 @@ public class PlanetController : ControllerBase
         return BadRequest(validationResult.ToString());
     }
 
+    [Authorize]
     [HttpPost("update")]
-    public IActionResult UpdatePlanet([FromBody] PlanetUpdateRequest request)
+    public async Task<IActionResult> UpdatePlanet([FromBody] PlanetUpdateRequest request)
     {
         var validationResult = new PlanetUpdateValidator().Validate(request);
         if (validationResult.IsValid)
         {
-            var updatePlanetModel = _mapper.Map<PlanetModel>(request);
             try
             {
-                var starId = _planetService.Update(updatePlanetModel);
-                return Ok(starId);
+                var updatePlanetModel = _mapper.Map<PlanetModel>(request);
+                Guid planetId;
+                if(User.IsInRole("Admin"))
+                    planetId = await _planetService.Update(updatePlanetModel);
+                else
+                {
+                    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    updatePlanetModel.UserId = Guid.Parse(userId);
+                    planetId = await _planetService.Update(updatePlanetModel);
+                }
+                return Ok(planetId);
             }
             catch (Exception e)
             {
-                return BadRequest("ERROR");
+                _logger.LogError(e.ToString());
+                return BadRequest(e.Message);
             }
         }
 
@@ -69,52 +84,74 @@ public class PlanetController : ControllerBase
     }
     
     [HttpGet]
-    public IActionResult GetAllPlanet()
+    public async Task<IActionResult> GetAllPlanet()
     {
         try
         {
-            var planets = _planetService.GetAll();
+            var planets = await _planetService.GetAll();
             var response = _mapper.Map<IList<PlanetResponse>>(planets);
             return Ok(response);
         }
         catch (Exception e)
         {
             _logger.LogError(e.ToString());
-            return BadRequest("ERROR");
+            return BadRequest(e.Message);
         }
     }
     
     [HttpGet]
     [Route("filter")]
-    public IActionResult GetFilteredPlanet([FromQuery] PlanetFilter filter)
+    public async Task<IActionResult> GetFilteredPlanet([FromQuery] PlanetFilter filter)
     {
         try
         {
             var planetFilterModel = _mapper.Map<FilterPlanetModel>(filter);
-            var planets = _planetService.GetAll(planetFilterModel);
+            var planets = await _planetService.GetAll(planetFilterModel);
             var response = _mapper.Map<IList<PlanetResponse>>(planets);
             return Ok(response);
         }
         catch (Exception e)
         {
             _logger.LogError(e.ToString());
-            return BadRequest("ERROR"); 
+            return BadRequest(e.Message); 
         }
     }
     
     [HttpGet]
     [Route("info")]
-    public IActionResult GetPlanetById([FromQuery] Guid id)
+    public async Task<IActionResult> GetPlanetById([FromQuery] Guid id)
     {
         try
         {
-            var planetModel = _planetService.GetById(id);
+            var planetModel = await _planetService.GetById(id);
             return Ok(_mapper.Map<PlanetResponse>(planetModel));
         }
         catch (Exception e)
         {
             _logger.LogError(e.ToString());
-            return BadRequest("ERROR");
+            return BadRequest(e.Message);
+        }
+    }
+    
+    [Authorize]
+    [HttpDelete]
+    public async Task<IActionResult> DeletePlanet([FromQuery] Guid id)
+    {
+        try
+        {
+            if(User.IsInRole("Admin"))
+                await _planetService.Delete(id);
+            else
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                await _planetService.Delete(id, Guid.Parse(userId));
+            }
+            return Ok("Запись успешно удалена");
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.ToString());
+            return BadRequest(e.Message);
         }
     }
 }

@@ -15,6 +15,8 @@ public class IdentityConfigurator
             .AddEntityFrameworkStores<SpaceAtlasDbContext>()
             .AddDefaultTokenProviders();
         
+        
+        
         services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -28,7 +30,7 @@ public class IdentityConfigurator
                     ValidateAudience = true,
                     ValidIssuer = "your-issuer",
                     ValidAudience = "your-audience",
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your-secret-key"))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("12345678901234567890123456789012"))
                 };
             });
         

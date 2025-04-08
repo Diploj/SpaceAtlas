@@ -1,5 +1,6 @@
 using System.Data;
 using AutoMapper;
+using SpaceAtlas.BL.Exceptions;
 using SpaceAtlas.BL.Star.Entities;
 using SpaceAtlas.DataAccess.Entities;
 using SpaceAtlas.DataAccess.Repository;
@@ -17,39 +18,43 @@ public class StarService : IStarService
         _mapper = mapper;
     }
     
-    public IEnumerable<StarModel> GetAll(FilterStarModel? filter = null)
+    public async Task<IEnumerable<StarModel>> GetAll(FilterStarModel? filter = null)
     {
-        var stars = _starRepository.GetAll(x =>
+        var stars = await _starRepository.GetAll(x =>
             filter == null || 
             (filter.Name == null || x.Name  == filter.Name )||
             (filter.UserId == null || x.UserId == filter.UserId));
         return _mapper.Map<IEnumerable<StarModel>>(stars);
     }
 
-    public StarModel GetById(Guid starId)
+    public async Task<StarModel> GetById(Guid starId)
     {
-        var star = _starRepository.GetById(starId);
+        var star = await _starRepository.GetById(starId);
         if(star == null)
             throw new KeyNotFoundException();
         return _mapper.Map<StarModel>(star);
     }
 
-    public Guid Create(StarModel star)
+    public async Task<Guid> Create(StarModel star)
     {
         star.Id = Guid.NewGuid();
         var starEntity = _mapper.Map<StarEntity>(star);
-        return _starRepository.Save(starEntity);
+        return await _starRepository.Save(starEntity);
     }
 
-    public Guid Update(StarModel star)
+    public async Task<Guid> Update(StarModel star)
     {
         if (star.Id != null)
         {
-            var starEntity = _starRepository.GetById(star.Id.Value);
+            var starEntity = await _starRepository.GetById(star.Id.Value);
             if (starEntity == null)
-                throw new KeyNotFoundException();
+                throw new KeyNotFoundException("Такой звезды не существует");
+            if (star.UserId == null)
+                star.UserId = starEntity.UserId;
+            else if (star.UserId != starEntity.UserId)
+                throw new IncorrectAuthorException("У вас нет прав на редактирование данной статьи");
             starEntity = _mapper.Map<StarEntity>(star);
-            return _starRepository.Save(starEntity);
+            return await _starRepository.Save(starEntity);
         }
         else
         {
@@ -57,8 +62,21 @@ public class StarService : IStarService
         }
     }
 
-    public void Delete(Guid starId)
+    public async Task Delete(Guid starId)
     {
-        _starRepository.Delete(starId);
+        var starEntity = await _starRepository.GetById(starId);
+        if (starEntity == null)
+            throw new KeyNotFoundException("Такой звезды не существует");
+        await _starRepository.Delete(starId);
+    }
+    
+    public async Task Delete(Guid starId,Guid userId)
+    {
+        var starEntity = await _starRepository.GetById(starId);
+        if (starEntity == null)
+            throw new KeyNotFoundException("Такой звезды не существует");
+        if (starEntity.UserId != userId)
+            throw new IncorrectAuthorException("У вас нет прав на редактирование данной статьи");
+        await _starRepository.Delete(starId);
     }
 }

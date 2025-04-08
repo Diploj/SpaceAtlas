@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using SpaceAtlas.BL.Star;
@@ -23,21 +25,24 @@ public class StarController : ControllerBase
         _starService = starService;
     }
 
+    [Authorize]
     [HttpPost("create")]
-    public IActionResult CreateStar([FromBody] StarCreateRequest request)
+    public async Task<IActionResult> CreateStar([FromBody] StarCreateRequest request)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var validationResult = new StarCreateValidator().Validate(request);
-        if (validationResult.IsValid)
+        if (validationResult.IsValid && userId != null)
         {
             try
             {
                 var createStarModel = _mapper.Map<StarModel>(request);
-                var starId = _starService.Create(createStarModel);
+                createStarModel.UserId = Guid.Parse(userId);
+                var starId = await _starService.Create(createStarModel);
                 return Ok(starId);
             }
             catch (Exception e)
             {
-                _logger.LogError(e.Message);
+                _logger.LogError(e.ToString());
                 return BadRequest(e.Message);
             }
         }
@@ -45,21 +50,31 @@ public class StarController : ControllerBase
         return BadRequest(validationResult.ToString());
     }
 
+    [Authorize]
     [HttpPost("update")]
-    public IActionResult UpdateStar([FromBody] StarUpdateRequest request)
+    public async Task<IActionResult> UpdateStar([FromBody] StarUpdateRequest request)
     {
         var validationResult = new StarUpdateValidator().Validate(request);
         if (validationResult.IsValid)
         {
-            var updateStarModel = _mapper.Map<StarModel>(request);
             try
             {
-                var starId = _starService.Update(updateStarModel);
+                var updateStarModel = _mapper.Map<StarModel>(request);
+                Guid starId;
+                if(User.IsInRole("Admin"))
+                    starId = await _starService.Update(updateStarModel);
+                else
+                {
+                    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    updateStarModel.UserId = Guid.Parse(userId);
+                    starId = await _starService.Update(updateStarModel);
+                }
                 return Ok(starId);
             }
             catch (Exception e)
             {
-                return BadRequest("ERROR");
+                _logger.LogError(e.ToString());
+                return BadRequest(e.Message);
             }
         }
 
@@ -68,52 +83,74 @@ public class StarController : ControllerBase
     }
     
     [HttpGet]
-    public IActionResult GetAllStars()
+    public async Task<IActionResult> GetAllStars()
     {
         try
         {
-            var stars = _starService.GetAll();
+            var stars = await _starService.GetAll();
             var response = _mapper.Map<IList<StarResponse>>(stars);
             return Ok(response);
         }
         catch (Exception e)
         {
             _logger.LogError(e.ToString());
-            return BadRequest("ERROR");
+            return BadRequest(e.Message);
         }
     }
     
     [HttpGet]
     [Route("filter")]
-    public IActionResult GetFilteredStars([FromQuery] StarFilter filter)
+    public async Task<IActionResult> GetFilteredStars([FromQuery] StarFilter filter)
     {
         try
         {
             var starFilterModel = _mapper.Map<FilterStarModel>(filter);
-            var stars = _starService.GetAll(starFilterModel);
+            var stars = await _starService.GetAll(starFilterModel);
             var response = _mapper.Map<IList<StarResponse>>(stars);
             return Ok(response);
         }
         catch (Exception e)
         {
             _logger.LogError(e.ToString());
-            return BadRequest("ERROR"); 
+            return BadRequest(e.Message); 
         }
     }
     
     [HttpGet]
     [Route("info")]
-    public IActionResult GetStarById([FromQuery] Guid id)
+    public async Task<IActionResult> GetStarById([FromQuery] Guid id)
     {
         try
         {
-            var starModel = _starService.GetById(id);
+            var starModel = await _starService.GetById(id);
             return Ok(_mapper.Map<StarResponse>(starModel));
         }
         catch (Exception e)
         {
             _logger.LogError(e.ToString());
-            return BadRequest("ERROR");
+            return BadRequest(e.Message);
+        }
+    }
+
+    [Authorize]
+    [HttpDelete]
+    public async Task<IActionResult> DeleteStar([FromQuery] Guid id)
+    {
+        try
+        {
+            if (User.IsInRole("Admin"))
+                await _starService.Delete(id);
+            else
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value; 
+                await _starService.Delete(id, Guid.Parse(userId));
+            }
+            return Ok("Запись успешно удалена");
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.ToString());
+            return BadRequest(e.Message);
         }
     }
 }

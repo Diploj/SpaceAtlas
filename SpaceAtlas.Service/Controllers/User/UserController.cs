@@ -1,5 +1,10 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using SpaceAtlas.Algoritms;
 using SpaceAtlas.BL.User;
 using SpaceAtlas.BL.User.Entities;
 using SpaceAtlas.Controllers.User.Entities;
@@ -22,7 +27,7 @@ public class UserController : ControllerBase
         _userService = userService;
     }
 
-    [HttpPost("register")]
+    /*[HttpPost("register")]
     public IActionResult RegisterUser([FromBody] UserCreateRequest request)
     {
         var validationResult = new UserCreateValidator().Validate(request);
@@ -42,6 +47,30 @@ public class UserController : ControllerBase
         }
         _logger.LogError(validationResult.ToString());
         return BadRequest(validationResult.ToString());
+    }
+    
+    [HttpPost("login")]
+    public IActionResult Login([FromBody] LoginRequest request)
+    {
+        try
+        {
+            var user = _userService.GetByName(request.Username);
+            if (MyHasher.Hash(request.Password)!= user.PasswordHash)
+                return Unauthorized();
+            //var roles = _userService.GetRolesAsync(user);
+
+            var token = TokenGenerator.Generate(user.Username, user.PasswordHash, roles);
+            return Ok(new
+            {
+                token = new JwtSecurityTokenHandler().WriteToken(token),
+                expiration = token.ValidTo
+            });
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.Message);
+            return BadRequest(e.Message);
+        }
     }
 
     [HttpPost("update")]
@@ -114,5 +143,5 @@ public class UserController : ControllerBase
             _logger.LogError(e.ToString());
             return BadRequest("ERROR");
         }
-    }
+    }*/
 }

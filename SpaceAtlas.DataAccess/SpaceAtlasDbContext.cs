@@ -14,9 +14,13 @@ public class SpaceAtlasDbContext : IdentityDbContext<UserEntity,IdentityRole<Gui
     public SpaceAtlasDbContext(DbContextOptions<SpaceAtlasDbContext> options) : base(options)
     {}
 
-    /*protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<UserEntity>().HasKey(x => x.Id);
+        modelBuilder.Entity<UserEntity>().HasIndex(x => x.Email).IsUnique();
+        modelBuilder.Entity<UserEntity>().HasIndex(x => x.UserName).IsUnique();
+            ;
         
         modelBuilder.Entity<StarEntity>().HasKey(x => x.Id);
         modelBuilder.Entity<StarEntity>().HasOne(x => x.User)
@@ -28,7 +32,7 @@ public class SpaceAtlasDbContext : IdentityDbContext<UserEntity,IdentityRole<Gui
             .WithMany(x=>x.Planets)
             .HasForeignKey(x => x.UserId);
         
-    }*/
+    }
     
     
 }
