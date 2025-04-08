@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Identity;
-namespace SpaceAtlas.Hasher;
+namespace SpaceAtlas.Algoritms;
 
 public class MyHasher
 {

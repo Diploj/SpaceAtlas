@@ -5,9 +5,9 @@ namespace SpaceAtlas.DataAccess.Repository;
 
 public interface IRepository<T> where T : IBaseEntity
 {
-    IEnumerable<T> GetAll();
-    IEnumerable<T> GetAll(Expression<Func<T, bool>> filter);
-    T? GetById(Guid id);
-    Guid Save(T entity);
-    void Delete(Guid entity);
+    Task<IEnumerable<T>> GetAll();
+    Task<IEnumerable<T>> GetAll(Expression<Func<T, bool>> filter);
+    Task<T?> GetById(Guid id);
+    Task<Guid> Save(T entity);
+    Task Delete(Guid entity);
 }

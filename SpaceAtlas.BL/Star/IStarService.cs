@@ -4,9 +4,11 @@ namespace SpaceAtlas.BL.Star;
 
 public interface IStarService
 {
-    public IEnumerable<StarModel> GetAll(FilterStarModel? filter = null);
-    public StarModel GetById(Guid starId);
-    public Guid Create(StarModel star);
-    public Guid Update(StarModel star);
-    public void Delete(Guid starId);
+    public Task<IEnumerable<StarModel>> GetAll(FilterStarModel? filter = null);
+    public Task<StarModel> GetById(Guid starId);
+    public Task<Guid> Create(StarModel star);
+    public Task<Guid> Update(StarModel star);
+    //public Task<Guid> UpdateAdmin(StarModel star);
+    public Task Delete(Guid starId);
+    public Task Delete(Guid starId,Guid userId);
 }

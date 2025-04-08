@@ -4,9 +4,10 @@ namespace SpaceAtlas.BL.Planet;
 
 public interface IPlanetService
 {
-    public IEnumerable<PlanetModel> GetAll(FilterPlanetModel? filter = null);
-    public PlanetModel GetById(Guid planetId);
-    public Guid Create(PlanetModel planet);
-    public Guid Update(PlanetModel planet);
-    public void Delete(Guid planetId);
+    public Task<IEnumerable<PlanetModel>> GetAll(FilterPlanetModel? filter = null);
+    public Task<PlanetModel> GetById(Guid planetId);
+    public Task<Guid> Create(PlanetModel planet);
+    public Task<Guid> Update(PlanetModel planet);
+    public Task Delete(Guid planetId);
+    public Task Delete(Guid planetId,Guid userId);
 }

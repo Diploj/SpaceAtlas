@@ -1,5 +1,6 @@
 using System.Data;
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using SpaceAtlas.BL.User.Entities;
 using SpaceAtlas.DataAccess.Entities;
 using SpaceAtlas.DataAccess.Repository;
@@ -8,7 +9,7 @@ namespace SpaceAtlas.BL.User;
 
 public class UserService : IUserService
 {
-    private readonly IRepository<UserEntity> _userRepository;
+    /*private readonly IRepository<UserEntity> _userRepository;
     private readonly IMapper _mapper;
 
     public UserService(IRepository<UserEntity> userRepository, IMapper mapper)
@@ -20,7 +21,7 @@ public class UserService : IUserService
     {
         var users = _userRepository.GetAll(x =>
             filter == null || 
-            (filter.Username == null || x.Username == filter.Username));
+            (filter.Username == null || x.UserName == filter.Username));
         return _mapper.Map<IEnumerable<UserModel>>(users);
     }
 
@@ -30,6 +31,15 @@ public class UserService : IUserService
         if(user == null)
             throw new KeyNotFoundException();
         return _mapper.Map<UserModel>(user);
+    }
+    
+    public UserModel GetByName(string username)
+    {
+        var user = _userRepository.GetAll(x =>
+            (x.UserName == username));
+        if(!user.Any())
+            throw new KeyNotFoundException();
+        return _mapper.Map<UserModel>(user.First());
     }
 
     public Guid Create(UserModel user)
@@ -58,4 +68,12 @@ public class UserService : IUserService
     {
         _userRepository.Delete(userId);
     }
+
+   public IEnumerable<IdentityRole<Guid>> GetRoles(Guid userId)
+    {
+        var user = _userRepository.GetById(userId);
+        if(user == null)
+            throw new KeyNotFoundException();
+        var userManager = new UserManager<UserEntity>();
+    }*/
 }
