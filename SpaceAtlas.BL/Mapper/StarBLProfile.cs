@@ -9,5 +9,6 @@ public class StarBLProfile : Profile
     public StarBLProfile()
     {
         CreateMap<StarModel, StarEntity>();
+        CreateMap<StarEntity, StarModel>();
     }
 }

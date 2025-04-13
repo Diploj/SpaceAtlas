@@ -7,7 +7,7 @@ public class UserUpdateValidator: AbstractValidator<UserUpdateRequest>
 {
     public UserUpdateValidator()
     {
-        RuleFor(u => u.Username)
+        RuleFor(u => u.UserName)
             .NotEmpty()
             .WithMessage("Username is required");
         RuleFor(u => u.Password)

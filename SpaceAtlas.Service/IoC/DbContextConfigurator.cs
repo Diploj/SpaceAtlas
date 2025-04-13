@@ -6,10 +6,10 @@ namespace SpaceAtlas.IoC;
 
 public class DbContextConfigurator
 {
-    public static void ConfigureService(IServiceCollection services,DbSettings settings )
+    public static void ConfigureService(IServiceCollection services,IConfiguration configuration)
     {
         services.AddDbContextFactory<SpaceAtlasDbContext>(
-            options => { options.UseNpgsql(settings.ConnectionString); },
+            options => { options.UseNpgsql(configuration["DbContext:ConnectionString"]); },
             ServiceLifetime.Scoped);
     }
 

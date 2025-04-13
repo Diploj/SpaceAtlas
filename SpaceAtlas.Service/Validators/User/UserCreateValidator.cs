@@ -7,7 +7,7 @@ public class UserCreateValidator: AbstractValidator<UserCreateRequest>
 {
     public UserCreateValidator()
     {
-        RuleFor(u => u.Username)
+        RuleFor(u => u.UserName)
             .NotEmpty()
             .WithMessage("Username is required");
         RuleFor(u => u.Password)

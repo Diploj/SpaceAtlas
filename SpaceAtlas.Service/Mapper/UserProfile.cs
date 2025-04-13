@@ -1,7 +1,7 @@
 using AutoMapper;
 using SpaceAtlas.BL.User.Entities;
 using SpaceAtlas.Controllers.User.Entities;
-using SpaceAtlas.Hasher;
+using SpaceAtlas.Algoritms;
 
 namespace SpaceAtlas.Mapper;
 
@@ -11,12 +11,10 @@ public class UserProfile : Profile
     {
         CreateMap<UserCreateRequest, UserModel>()
             .ForMember(dest => dest.PasswordHash,
-                opt => 
-                    opt.MapFrom(src => MyHasher.Hash(src.Password)));
+                opt => opt.Ignore());
         CreateMap<UserUpdateRequest, UserModel>()
             .ForMember(dest => dest.PasswordHash,
-                opt => 
-                    opt.MapFrom(src => MyHasher.Hash(src.Password)));;
+                opt => opt.Ignore());
         CreateMap<UserFilter, FilterUserModel>();
         CreateMap<UserModel, UserResponse>();
     }
