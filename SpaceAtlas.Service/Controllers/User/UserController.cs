@@ -1,10 +1,7 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using SpaceAtlas.Algoritms;
 using SpaceAtlas.BL.User;
 using SpaceAtlas.BL.User.Entities;
 using SpaceAtlas.Controllers.User.Entities;
@@ -26,64 +23,22 @@ public class UserController : ControllerBase
         _logger = logger;
         _userService = userService;
     }
-
-    /*[HttpPost("register")]
-    public IActionResult RegisterUser([FromBody] UserCreateRequest request)
-    {
-        var validationResult = new UserCreateValidator().Validate(request);
-        if (validationResult.IsValid)
-        {
-            try
-            {
-                var createUserModel = _mapper.Map<UserModel>(request);
-                var userId = _userService.Create(createUserModel);
-                return Ok(userId);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e.Message);
-                return BadRequest(e.Message);
-            }
-        }
-        _logger.LogError(validationResult.ToString());
-        return BadRequest(validationResult.ToString());
-    }
     
-    [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
-    {
-        try
-        {
-            var user = _userService.GetByName(request.Username);
-            if (MyHasher.Hash(request.Password)!= user.PasswordHash)
-                return Unauthorized();
-            //var roles = _userService.GetRolesAsync(user);
-
-            var token = TokenGenerator.Generate(user.Username, user.PasswordHash, roles);
-            return Ok(new
-            {
-                token = new JwtSecurityTokenHandler().WriteToken(token),
-                expiration = token.ValidTo
-            });
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e.Message);
-            return BadRequest(e.Message);
-        }
-    }
-
+    [Authorize]
     [HttpPost("update")]
-    public IActionResult UpdateUser([FromBody] UserUpdateRequest request)
+    public async Task<IActionResult> UpdateUser([FromBody] UserUpdateRequest request)
     {
         var validationResult = new UserUpdateValidator().Validate(request);
         if (validationResult.IsValid)
         {
+            
             var updateUserModel = _mapper.Map<UserModel>(request);
             try
-            {
-                var userId = _userService.Update(updateUserModel);
-                return Ok(userId);
+            {   
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                updateUserModel.Id = Guid.Parse(userId);
+                var result = await _userService.Update(updateUserModel, request.Password);
+                return Ok(result);
             }
             catch (Exception e)
             {
@@ -95,7 +50,7 @@ public class UserController : ControllerBase
         return BadRequest(validationResult.ToString());
     }
     
-    [HttpGet]
+    /*[HttpGet]
     public IActionResult GetAllUsers()
     {
         try
@@ -109,9 +64,9 @@ public class UserController : ControllerBase
             _logger.LogError(e.ToString());
             return BadRequest("ERROR");
         }
-    }
+    }*/
     
-    [HttpGet]
+    /*[HttpGet]
     [Route("filter")]
     public IActionResult GetFilteredUsers([FromQuery] UserFilter filter)
     {
@@ -127,21 +82,39 @@ public class UserController : ControllerBase
             _logger.LogError(e.ToString());
             return BadRequest("ERROR"); 
         }
-    }
+    }*/
     
+    [Authorize]
     [HttpGet]
     [Route("info")]
-    public IActionResult GetUserById([FromQuery] Guid id)
+    public async Task<IActionResult> GetUserById([FromQuery] Guid id)
     {
         try
         {
-            var userModel = _userService.GetById(id);
+            var userModel = await _userService.GetById(id);
             return Ok(_mapper.Map<UserResponse>(userModel));
         }
         catch (Exception e)
         {
             _logger.LogError(e.ToString());
-            return BadRequest("ERROR");
+            return BadRequest(e.Message);
         }
-    }*/
+    }
+    
+    [Authorize]
+    [HttpDelete]
+    public async Task<IActionResult> DeleteUser()
+    {
+        try
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var result = await _userService.Delete(Guid.Parse(userId));
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.ToString());
+            return BadRequest(e.Message);
+        }
+    }
 }

@@ -11,12 +11,10 @@ public class UserProfile : Profile
     {
         CreateMap<UserCreateRequest, UserModel>()
             .ForMember(dest => dest.PasswordHash,
-                opt => 
-                    opt.MapFrom(src => MyHasher.Hash(src.Password)));
+                opt => opt.Ignore());
         CreateMap<UserUpdateRequest, UserModel>()
             .ForMember(dest => dest.PasswordHash,
-                opt => 
-                    opt.MapFrom(src => MyHasher.Hash(src.Password)));;
+                opt => opt.Ignore());
         CreateMap<UserFilter, FilterUserModel>();
         CreateMap<UserModel, UserResponse>();
     }

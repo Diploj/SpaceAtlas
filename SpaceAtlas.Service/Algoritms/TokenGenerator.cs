@@ -1,15 +1,24 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SpaceAtlas.BL.User.Entities;
 using SpaceAtlas.DataAccess.Entities;
+using SpaceAtlas.Settings;
 
 namespace SpaceAtlas.Algoritms;
 
 public class TokenGenerator
 {
-    public static JwtSecurityToken Generate(UserEntity user, IList<string> roles)
+    private readonly JwtSettings _jwtSettings;
+
+    public TokenGenerator(IOptions<JwtSettings> jwtSettings)
+    {
+        _jwtSettings = jwtSettings.Value;
+    }
+    public JwtSecurityToken Generate(UserModel user, IList<string> roles)
     {
         var claims = new List<Claim>
         {
@@ -25,12 +34,12 @@ public class TokenGenerator
         }
 
         return new JwtSecurityToken(
-            issuer: "your-issuer",
-            audience: "your-audience",
+            issuer: _jwtSettings.Issuer,
+            audience: _jwtSettings.Audience,
             claims: claims,
             expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: new SigningCredentials(
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes("12345678901234567890123456789012")),
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey)),
                 SecurityAlgorithms.HmacSha256)
         );
     }

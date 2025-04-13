@@ -9,71 +9,73 @@ namespace SpaceAtlas.BL.User;
 
 public class UserService : IUserService
 {
-    /*private readonly IRepository<UserEntity> _userRepository;
+    private readonly UserManager<UserEntity> _userRepository;
     private readonly IMapper _mapper;
 
-    public UserService(IRepository<UserEntity> userRepository, IMapper mapper)
+    public UserService(UserManager<UserEntity> userRepository, IMapper mapper)
     {
         _userRepository = userRepository;
         _mapper = mapper;
     }
-    public IEnumerable<UserModel> GetAll(FilterUserModel? filter = null)
-    {
-        var users = _userRepository.GetAll(x =>
-            filter == null || 
-            (filter.Username == null || x.UserName == filter.Username));
-        return _mapper.Map<IEnumerable<UserModel>>(users);
-    }
 
-    public UserModel GetById(Guid userId)
+    public async Task<UserModel> GetById(Guid userId)
     {
-        var user = _userRepository.GetById(userId);
-        if(user == null)
-            throw new KeyNotFoundException();
+        var user = await _userRepository.FindByIdAsync(userId.ToString());
+        if (user == null)
+            throw new KeyNotFoundException("");
         return _mapper.Map<UserModel>(user);
     }
-    
-    public UserModel GetByName(string username)
+
+    public async Task<UserModel> GetByName(string userName)
     {
-        var user = _userRepository.GetAll(x =>
-            (x.UserName == username));
-        if(!user.Any())
-            throw new KeyNotFoundException();
-        return _mapper.Map<UserModel>(user.First());
+        var user = await _userRepository.FindByNameAsync(userName);
+        if (user == null)
+            throw new KeyNotFoundException("");
+        return _mapper.Map<UserModel>(user);
     }
 
-    public Guid Create(UserModel user)
+    public async Task<IList<string>> GetRole(UserModel user)
+    {
+        var role = await _userRepository.GetRolesAsync(_mapper.Map<UserEntity>(user));
+        return role;
+    }
+
+    public async Task<bool> CheckPassword(UserModel user, string password)
+    {
+        return await _userRepository.CheckPasswordAsync(_mapper.Map<UserEntity>(user), password);
+    }
+
+    public async Task<IdentityResult> Create(UserModel user, string password)
     {
         var userEntity = _mapper.Map<UserEntity>(user);
-        return _userRepository.Save(userEntity);
+        var result = await _userRepository.CreateAsync(userEntity, password);
+        await _userRepository.AddToRoleAsync(userEntity, "User");
+        return result;
     }
 
-    public Guid Update(UserModel user)
+    public async Task<IdentityResult> Update(UserModel user, string password)
     {
-        if (user.Id != null)
+        var userEntity = _mapper.Map<UserEntity>(user);
+        userEntity.PasswordHash = _userRepository.PasswordHasher?.HashPassword(userEntity, password);
+        var result = await _userRepository.UpdateAsync(userEntity);
+        return result;
+    }
+
+    public async Task<IdentityResult> Delete(Guid userId)
+    {
+        try
         {
-            var userEntity = _userRepository.GetById(user.Id.Value);
-            if (userEntity == null)
-                throw new KeyNotFoundException();
-            userEntity = _mapper.Map<UserEntity>(user);
-            return _userRepository.Save(userEntity);
+            var user = await _userRepository.FindByIdAsync(userId.ToString()); 
+            if (user == null)
+                throw new KeyNotFoundException("adaw");
+            var result = await _userRepository.DeleteAsync(user);
+            return result;
         }
-        else
+        catch (Exception e)
         {
-            throw new NoNullAllowedException();
+            Console.WriteLine(e);
+            throw new Exception("Я бля хз");
         }
+        
     }
-
-    public void Delete(Guid userId)
-    {
-        _userRepository.Delete(userId);
-    }
-
-   public IEnumerable<IdentityRole<Guid>> GetRoles(Guid userId)
-    {
-        var user = _userRepository.GetById(userId);
-        if(user == null)
-            throw new KeyNotFoundException();
-        var userManager = new UserManager<UserEntity>();
-    }*/
 }

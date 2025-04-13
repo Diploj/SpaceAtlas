@@ -4,12 +4,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using SpaceAtlas.DataAccess;
 using SpaceAtlas.DataAccess.Entities;
+using SpaceAtlas.Settings;
 
 namespace SpaceAtlas.IoC;
 
 public class IdentityConfigurator
 {
-    public static void Configure(IServiceCollection services)
+    public static void Configure(IServiceCollection services, IConfiguration configuration)
     {
         services.AddIdentity<UserEntity, IdentityRole<Guid>>()
             .AddEntityFrameworkStores<SpaceAtlasDbContext>()
@@ -28,9 +29,10 @@ public class IdentityConfigurator
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
-                    ValidIssuer = "your-issuer",
-                    ValidAudience = "your-audience",
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("12345678901234567890123456789012"))
+                    ValidIssuer = configuration["JwtSettings:Issuer"],
+                    ValidAudience = configuration["JwtSettings:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(configuration["JwtSettings:SecretKey"]))
                 };
             });
         
